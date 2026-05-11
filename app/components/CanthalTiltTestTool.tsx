@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useMemo, useRef, useState } from "react";
+import { ReactNode, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { trackEvent } from "@/app/libs/amplitude";
 import {
@@ -8,6 +8,7 @@ import {
   EyeShapeKey,
   useEyeShapeAnalysis,
 } from "@/app/hooks/useEyeShapeAnalysis";
+import EyeAnalysisLoadingStatus, { type EyeAnalysisLoadingMessage } from "./EyeAnalysisLoadingStatus";
 
 type FaqItem = {
   question: string;
@@ -295,6 +296,29 @@ const FAQ_ITEMS: FaqItem[] = [
   },
 ];
 
+const EYE_LOADING_MESSAGES: EyeAnalysisLoadingMessage[] = [
+  {
+    title: "Photo intake and normalization",
+    body: "Preparing your image and standardizing angle, framing, and facial scale.",
+  },
+  {
+    title: "Eye landmark mapping",
+    body: "Detecting inner and outer eye-corner landmarks and key lid reference points.",
+  },
+  {
+    title: "Eyelid contour analysis",
+    body: "Tracing upper and lower lid contours to classify your primary eye-shape pattern.",
+  },
+  {
+    title: "Tilt and iris estimation",
+    body: "Estimating canthal tilt direction and dominant iris-color signal from visible pixels.",
+  },
+  {
+    title: "Final eye profile assembly",
+    body: "Combining shape, tilt, and confidence signals before returning your result.",
+  },
+];
+
 function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value));
 }
@@ -558,14 +582,9 @@ export default function CanthalTiltTestTool() {
   const { analysis, loading, error } = useEyeShapeAnalysis(imageUrl, { source });
 
   const activeShape = analysis?.shape ?? null;
-  const alternativesText = useMemo(() => {
-    if (!analysis?.alternatives?.length) return null;
-    return analysis.alternatives.slice(0, 2).join(" or ");
-  }, [analysis?.alternatives]);
 
   const sectionWrap = "w-full max-w-3xl mx-auto space-y-6 text-gray-900 pt-10 pb-10 lg:pt-20 lg:pb-20 leading-relaxed";
   const h2Class = "text-3xl lg:text-4xl font-semibold text-center";
-  const pClass = "text-lg leading-relaxed";
 
   return (
     <main className="bg-base-100">
@@ -589,76 +608,67 @@ export default function CanthalTiltTestTool() {
           </div>
         ) : (
           <div className="w-full max-w-5xl mt-10">
-            <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-8 lg:gap-16 items-start">
-              <div className="w-full sm:max-w-sm lg:max-w-none justify-self-center">
-                <img
-                  src={imageUrl}
-                  alt="Uploaded image for canthal tilt test"
-                  className="w-full max-w-[95vw] sm:max-w-sm lg:w-[360px] mx-auto rounded-2xl shadow-xl object-cover aspect-[3/4] bg-base-200"
+            {loading ? (
+              <div className="w-full max-w-none px-0 sm:px-4 lg:px-8">
+                <EyeAnalysisLoadingStatus
+                  imageUrl={imageUrl}
+                  title="Building Your Eye Analysis"
+                  messages={EYE_LOADING_MESSAGES}
                 />
               </div>
+            ) : (
+              <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-8 lg:gap-16 items-start">
+                <div className="w-full sm:max-w-sm lg:max-w-none justify-self-center">
+                  <img
+                    src={imageUrl}
+                    alt="Uploaded image for canthal tilt test"
+                    className="w-full max-w-[95vw] sm:max-w-sm lg:w-[360px] mx-auto rounded-2xl shadow-xl object-cover aspect-[3/4] bg-base-200"
+                  />
+                </div>
 
-              <div className="w-full rounded-2xl border bg-white p-6 lg:p-8 shadow-sm">
-                <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900">Eye Analysis Result</h2>
+                <div className="w-full rounded-2xl border bg-white p-6 lg:p-8 shadow-sm">
+                  <h2 className="text-2xl lg:text-3xl font-semibold text-gray-900">Eye Analysis Result</h2>
 
-                {loading ? (
-                  <p className="mt-4 text-lg text-gray-700">
-                    Analyzing eye contours, canthal tilt direction, and iris color profile...
-                  </p>
-                ) : null}
-
-                {error ? (
-                  <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
-                    <p className="whitespace-pre-line text-red-700">{error}</p>
-                  </div>
-                ) : null}
-
-                {!loading && !error && analysis ? (
-                  <div className="mt-5">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <p className="text-4xl lg:text-5xl font-bold text-primary">{analysis.shapeLabel}</p>
-                      <span
-                        className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${confidenceBadgeClass(
-                          analysis.confidence
-                        )}`}
-                      >
-                        {analysis.confidence.toUpperCase()} confidence
-                      </span>
+                  {error ? (
+                    <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-4">
+                      <p className="whitespace-pre-line text-red-700">{error}</p>
                     </div>
+                  ) : null}
 
-                    <p className="mt-3 text-lg text-gray-700">
-                      Eye color: <span className="font-semibold">{analysis.eyeColorLabel}</span> (
-                      <span className="font-semibold">{analysis.eyeColorConfidence}/100</span>)
-                    </p>
+                  {!error && analysis ? (
+                    <div className="mt-5">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="text-4xl lg:text-5xl font-bold text-primary">{analysis.shapeLabel}</p>
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1 text-sm font-semibold ${confidenceBadgeClass(
+                            analysis.confidence
+                          )}`}
+                        >
+                          {analysis.confidence.toUpperCase()} confidence
+                        </span>
+                      </div>
 
-                    <p className="mt-2 text-lg text-gray-700">
-                      Canthal tilt: <span className={`font-semibold ${tiltColor(analysis.canthalTilt)}`}>{analysis.canthalTiltLabel}</span>
-                      {analysis.canthalTiltAngle != null ? (
-                        <>
-                          {" "}(
-                          <span className="font-semibold">{analysis.canthalTiltAngle.toFixed(1)}°</span>)
-                        </>
-                      ) : null}
-                    </p>
-
-                    {analysis.rationale ? <p className="mt-5 text-gray-700 leading-relaxed">{analysis.rationale}</p> : null}
-
-                    {alternativesText ? (
-                      <p className="mt-3 text-sm text-gray-600">
-                        Close alternatives: <span className="font-semibold text-gray-800">{alternativesText}</span>
+                      <p className="mt-3 text-lg text-gray-700">
+                        Eye color: <span className="font-semibold">{analysis.eyeColorLabel}</span> (
+                        <span className="font-semibold">{analysis.eyeColorConfidence}/100</span>)
                       </p>
-                    ) : null}
 
-                    {analysis.secondaryTones.length ? (
-                      <p className="mt-2 text-sm text-gray-600">
-                        Secondary eye-color tones:{" "}
-                        <span className="font-semibold text-gray-800">{analysis.secondaryTones.join(", ")}</span>
+                      <p className="mt-2 text-lg text-gray-700">
+                        Canthal tilt: <span className={`font-semibold ${tiltColor(analysis.canthalTilt)}`}>{analysis.canthalTiltLabel}</span>
+                        {analysis.canthalTiltAngle != null ? (
+                          <>
+                            {" "}(
+                            <span className="font-semibold">{analysis.canthalTiltAngle.toFixed(1)}°</span>)
+                          </>
+                        ) : null}
                       </p>
-                    ) : null}
-                  </div>
-                ) : null}
+
+                      {analysis.rationale ? <p className="mt-5 text-gray-700 leading-relaxed">{analysis.rationale}</p> : null}
+                    </div>
+                  ) : null}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </section>
@@ -736,16 +746,22 @@ export default function CanthalTiltTestTool() {
           </div>
         ) : null}
 
-        {analysis?.styleSuggestions?.length ? (
-          <div className={sectionWrap}>
-            <h2 className={h2Class}>Style Suggestions</h2>
-            <ul className="list-disc pl-6 space-y-2 text-lg">
-              {analysis.styleSuggestions.map((tip, idx) => (
-                <li key={`${tip}-${idx}`}>{tip}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
+        <div className={sectionWrap}>
+          <h2 className={h2Class}>How to improve your Canthal Tilt</h2>
+          <ul className="list-disc pl-6 space-y-2 text-lg">
+            <li>Keep body fat in a healthier range to reduce facial puffiness around the eye area.</li>
+            <li>
+              If fat loss is your goal, track intake consistently with an{" "}
+              <a className="link" href="https://skoy.ai" target="_blank" rel="noopener noreferrer">
+                AI calorie tracker
+              </a>
+              .
+            </li>
+            <li>Improve sleep quality and hydration to reduce under-eye swelling and fluid retention.</li>
+            <li>Limit high-sodium meals before photos, since temporary water retention can affect eye appearance.</li>
+            <li>Use consistent photo angles and lighting to measure progress more accurately over time.</li>
+          </ul>
+        </div>
 
         <div className="hero pt-10 pb-10 lg:pt-20 lg:pb-20 flex items-center justify-center bg-base-100">
           <div className="hero-content w-full px-4">
