@@ -602,9 +602,6 @@ export default function CanthalTiltTestTool() {
             <div className="w-full max-w-lg mt-6 lg:max-w-xl">
               <TryExamples />
             </div>
-            <p className="mt-5 text-sm text-gray-600 max-w-md text-center">
-              Use a front-facing image with open eyes, even light, and minimal reflections on the iris.
-            </p>
           </div>
         ) : (
           <div className="w-full max-w-5xl mt-10">
