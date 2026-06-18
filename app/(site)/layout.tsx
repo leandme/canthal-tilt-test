@@ -13,6 +13,31 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <Script
+          data-cfasync="false"
+          src="https://cmp.gatekeeperconsent.com/min.js"
+          strategy="beforeInteractive"
+        />
+        <Script
+          data-cfasync="false"
+          src="https://the.gatekeeperconsent.com/cmp.min.js"
+          strategy="beforeInteractive"
+        />
+        <Script
+          async
+          src="//www.ezojs.com/ezoic/sa.min.js"
+          strategy="beforeInteractive"
+        />
+        <Script id="ezoic-standalone" strategy="beforeInteractive">
+          {`
+            window.ezstandalone = window.ezstandalone || {};
+            ezstandalone.cmd = ezstandalone.cmd || [];
+          `}
+        </Script>
+        <Script
+          src="//ezoicanalytics.com/analytics.js"
+          strategy="beforeInteractive"
+        />
+        <Script
           src="https://www.googletagmanager.com/gtag/js?id=G-0DEQLQNY3L"
           strategy="afterInteractive"
         />
