@@ -33,6 +33,15 @@ export default function PrivacyPolicy() {
       </section>
 
       <section className="mb-6">
+        <h2 className="text-2xl font-semibold mb-4">Advertising and Ezoic</h2>
+        <p className="mb-4">
+          We use Ezoic to manage and optimize advertising on this site. Ezoic and its partners
+          may use cookies and process information as described in the disclosures below.
+        </p>
+        <span id="ezoic-privacy-policy-embed" />
+      </section>
+
+      <section className="mb-6">
         <h2 className="text-2xl font-semibold mb-4">Data Retention</h2>
         <p>
           We aim to minimize retention. Uploaded photos are intended for processing and result
